@@ -59,7 +59,7 @@ func (b *Bot) handleInteraction(s *discordgo.Session, i *discordgo.InteractionCr
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("🏓 **Pong!** WebSocket gateway latency: `%dms`", latency),
+				Content: fmt.Sprintf("**Pong!** WebSocket gateway latency: `%dms`", latency),
 			},
 		})
 
@@ -72,7 +72,7 @@ func (b *Bot) handleInteraction(s *discordgo.Session, i *discordgo.InteractionCr
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   "Status",
-					Value:  "🟢 **Online & Connected**",
+					Value:  "**Online & Connected**",
 					Inline: true,
 				},
 				{

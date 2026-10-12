@@ -50,7 +50,7 @@ func Load() *Config {
 
 	statusMsg := strings.TrimSpace(os.Getenv("CROSSCAST_STATUS_MESSAGE"))
 	if statusMsg == "" {
-		statusMsg = "Broadcasting with Crosscast 📡"
+		statusMsg = "Broadcasting with Crosscast"
 	}
 
 	channels := make(map[string]ChannelTarget)

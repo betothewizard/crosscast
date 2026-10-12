@@ -31,7 +31,7 @@ func TestFormatPayloadToHTML(t *testing.T) {
 		t.Errorf("description HTML escaping failed: %s", html)
 	}
 
-	if !strings.Contains(html, "▫️ <b>Salary:</b> $3000 &amp; Equity") {
+	if !strings.Contains(html, "- <b>Salary:</b> $3000 &amp; Equity") {
 		t.Errorf("field HTML escaping failed: %s", html)
 	}
 

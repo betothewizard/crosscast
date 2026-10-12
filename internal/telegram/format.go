@@ -26,7 +26,7 @@ func FormatPayloadToHTML(p *router.BroadcastPayload) string {
 
 	if len(p.Fields) > 0 {
 		for _, f := range p.Fields {
-			sb.WriteString(fmt.Sprintf("▫️ <b>%s:</b> %s\n", html.EscapeString(f.Name), html.EscapeString(f.Value)))
+			sb.WriteString(fmt.Sprintf("- <b>%s:</b> %s\n", html.EscapeString(f.Name), html.EscapeString(f.Value)))
 		}
 		sb.WriteString("\n")
 	}

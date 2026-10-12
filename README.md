@@ -1,4 +1,4 @@
-# Crosscast 📡
+# Crosscast
 
 [![Go Version](https://img.shields.io/badge/go-1.24%2B-blue.svg)](https://golang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -6,13 +6,13 @@
 [![Platforms](https://img.shields.io/badge/Platforms-Discord%20%7C%20Telegram-5865F2)](https://github.com/betothewizard/crosscast)
 [![Memory](https://img.shields.io/badge/RAM-~15MB-brightgreen.svg)]()
 
-> **Crosscast** is an ultra-lightweight, multi-tenant social publishing & community broadcasting gateway written in Go.
+> **Crosscast** is an ultra-lightweight, multi-tenant social publishing and community broadcasting gateway written in Go.
 
 It bridges the gap between external services (backend microservices, edge workers, CI/CD pipelines, webhooks) and community chat platforms (**Discord** and **Telegram**), providing both an **inbound HTTP REST API** and **persistent 24/7 interactive bots**.
 
 ---
 
-## ⚡ Highlights
+## Highlights
 
 - **Multi-Platform Broadcasting**: Send a single `POST /broadcast` request and deliver formatted messages simultaneously to **Discord** and **Telegram**.
 - **Ultra-Lightweight**: Uses **< 15 MB RAM** at idle. Zero database requirement. Single static binary (~7 MB).
@@ -26,7 +26,7 @@ It bridges the gap between external services (backend microservices, edge worker
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 flowchart TD
@@ -56,7 +56,7 @@ flowchart TD
 
 ---
 
-## 🚀 Quickstart
+## Quickstart
 
 ### 1. Prerequisites
 - [Go 1.22+](https://golang.org/dl/) installed.
@@ -93,7 +93,7 @@ make run
 
 ---
 
-## 📡 HTTP API Reference
+## HTTP API Reference
 
 ### `POST /broadcast` (or `POST /api/v1/broadcast`)
 Broadcasts a message or rich card to a configured channel target or direct channel ID.
@@ -109,7 +109,7 @@ curl -X POST http://localhost:6403/broadcast \
   -H "Content-Type: application/json" \
   -d '{
     "target": "alerts",
-    "title": "🚨 Database Connection Latency High",
+    "title": "Database Connection Latency High",
     "description": "Replica lag exceeded 1500ms on primary cluster.",
     "url": "https://monitoring.example.com",
     "fields": [
@@ -128,7 +128,7 @@ curl -X POST http://localhost:6403/broadcast \
   -d '{
     "platform": "telegram",
     "target": "alerts",
-    "title": "🎉 Weekly Digest Published",
+    "title": "Weekly Digest Published",
     "description": "Check out the top engineering highlights of this week!",
     "url": "https://example.com/digest/42"
   }'
@@ -181,7 +181,7 @@ curl http://localhost:6403/health
 
 ---
 
-## 🤖 Bot Commands
+## Bot Commands
 
 Both bots support built-in operational commands:
 - `/ping`: Responds with live gateway responsiveness.
@@ -190,7 +190,7 @@ Both bots support built-in operational commands:
 
 ---
 
-## 🐳 Docker Deployment
+## Docker Deployment
 
 ```bash
 # Build minimal image
@@ -207,6 +207,6 @@ docker run -d \
 
 ---
 
-## 📄 License
+## License
 
 MIT License. Maintained by **betothewizard**.

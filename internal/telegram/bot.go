@@ -109,7 +109,7 @@ func (b *Bot) SendMessage(target string, payload *router.BroadcastPayload) (*tgb
 	// Prepare inline button if URL is provided
 	var keyboard *tgbotapi.InlineKeyboardMarkup
 	if payload.URL != "" {
-		btn := tgbotapi.NewInlineKeyboardButtonURL("🔗 View Details", payload.URL)
+		btn := tgbotapi.NewInlineKeyboardButtonURL("View Details", payload.URL)
 		kb := tgbotapi.NewInlineKeyboardMarkup(tgbotapi.NewInlineKeyboardRow(btn))
 		keyboard = &kb
 	}
@@ -198,20 +198,20 @@ func (b *Bot) pollUpdates(ctx context.Context) {
 func (b *Bot) handleCommand(msg *tgbotapi.Message) {
 	switch msg.Command() {
 	case "ping":
-		reply := tgbotapi.NewMessage(msg.Chat.ID, "🏓 <b>Pong!</b> Telegram Gateway is operational.")
+		reply := tgbotapi.NewMessage(msg.Chat.ID, "<b>Pong!</b> Telegram Gateway is operational.")
 		reply.ParseMode = tgbotapi.ModeHTML
 		b.api.Send(reply)
 
 	case "status":
 		status := b.GetStatus()
-		text := fmt.Sprintf("📡 <b>Crosscast Gateway Status</b>\n\n🟢 <b>Telegram:</b> Online (@%s)\n⏱ <b>Uptime:</b> <code>%s</code>",
+		text := fmt.Sprintf("<b>Crosscast Gateway Status</b>\n\n<b>Telegram:</b> Online (@%s)\n<b>Uptime:</b> <code>%s</code>",
 			status.Username, status.Uptime)
 		reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 		reply.ParseMode = tgbotapi.ModeHTML
 		b.api.Send(reply)
 
 	case "start":
-		text := "👋 Hello! I am <b>Crosscast</b>, an ultra-lightweight multi-tenant social & community broadcasting gateway.\n\nCommands: /ping, /status"
+		text := "Hello! I am <b>Crosscast</b>, an ultra-lightweight multi-tenant social & community broadcasting gateway.\n\nCommands: /ping, /status"
 		reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 		reply.ParseMode = tgbotapi.ModeHTML
 		b.api.Send(reply)
