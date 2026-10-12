@@ -1,0 +1,24 @@
+# Binaries
+bin/
+/crosscast
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test artifacts
+*.test
+*.out
+coverage.html
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# OS & Editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo

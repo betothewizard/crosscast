@@ -1,0 +1,28 @@
+# Build stage
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache git ca-certificates
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o crosscast ./cmd/crosscast
+
+# Runtime stage
+FROM alpine:3.20
+
+WORKDIR /app
+
+RUN apk --no-cache add ca-certificates tzdata && \
+    addgroup -S appgroup && adduser -S appuser -G appgroup
+
+COPY --from=builder /app/crosscast .
+
+USER appuser
+
+EXPOSE 6403
+
+ENTRYPOINT ["./crosscast"]
