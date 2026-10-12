@@ -59,8 +59,7 @@ func (r *Router) Resolve(target string) (*TargetInfo, error) {
 		return &TargetInfo{ChannelID: t, DefaultColor: ColorDefault}, nil
 	}
 
-	return nil, fmt.Errorf("unknown target '%s': configure via CROSSCAST_CHANNELS or CROSSCAST_CHANNEL_%s, or pass a Discord channel ID",
-		target, strings.ToUpper(target))
+	return nil, fmt.Errorf("unknown target '%s': configure via CROSSCAST_CHANNELS (JSON) or pass a Discord channel ID", target)
 }
 
 // PrepareMessage validates and constructs the discordgo.MessageSend for a given payload.

@@ -18,7 +18,7 @@ type Config struct {
 	DiscordAppID     string
 	DiscordGuildID   string            // Optional: restrict slash commands to a specific guild for instant updates
 	DefaultChannelID string            // Fallback channel ID when target is "default" or omitted
-	Channels         map[string]string // Target name -> Channel ID (loaded from CROSSCAST_CHANNELS or CROSSCAST_CHANNEL_*)
+	Channels         map[string]string // Target name -> Channel ID (parsed from JSON in CROSSCAST_CHANNELS)
 	StatusMessage    string            // Discord presence custom status message
 	TelegramToken    string
 	TelegramChatID   string
@@ -47,48 +47,20 @@ func Load() *Config {
 	telegramToken := strings.TrimSpace(os.Getenv("TELEGRAM_BOT_TOKEN"))
 	telegramChatID := strings.TrimSpace(os.Getenv("TELEGRAM_CHAT_ID"))
 
-	// Build target channels map
+	// Build target channels map from CROSSCAST_CHANNELS (strictly JSON object string)
 	channels := make(map[string]string)
-
-	// 1. Parse CROSSCAST_CHANNELS (supports JSON object e.g. {"jobs":"123","alerts":"456"} or fallback "jobs:123,alerts:456")
 	if rawChannels := strings.TrimSpace(os.Getenv("CROSSCAST_CHANNELS")); rawChannels != "" {
-		if strings.HasPrefix(rawChannels, "{") {
-			var jsonMap map[string]string
-			if err := json.Unmarshal([]byte(rawChannels), &jsonMap); err == nil {
-				for k, v := range jsonMap {
-					kClean := strings.ToLower(strings.TrimSpace(k))
-					vClean := strings.TrimSpace(v)
-					if kClean != "" && vClean != "" {
-						channels[kClean] = vClean
-					}
+		var jsonMap map[string]string
+		if err := json.Unmarshal([]byte(rawChannels), &jsonMap); err == nil {
+			for k, v := range jsonMap {
+				kClean := strings.ToLower(strings.TrimSpace(k))
+				vClean := strings.TrimSpace(v)
+				if kClean != "" && vClean != "" {
+					channels[kClean] = vClean
 				}
-			} else {
-				log.Printf("[config] warning: failed to parse CROSSCAST_CHANNELS as JSON: %v", err)
 			}
 		} else {
-			pairs := strings.Split(rawChannels, ",")
-			for _, pair := range pairs {
-				kv := strings.SplitN(strings.TrimSpace(pair), ":", 2)
-				if len(kv) == 2 {
-					k := strings.ToLower(strings.TrimSpace(kv[0]))
-					v := strings.TrimSpace(kv[1])
-					if k != "" && v != "" {
-						channels[k] = v
-					}
-				}
-			}
-		}
-	}
-
-	// 2. Parse individual CROSSCAST_CHANNEL_<TARGET> variables
-	for _, env := range os.Environ() {
-		parts := strings.SplitN(env, "=", 2)
-		if len(parts) == 2 && strings.HasPrefix(parts[0], "CROSSCAST_CHANNEL_") {
-			target := strings.ToLower(strings.TrimPrefix(parts[0], "CROSSCAST_CHANNEL_"))
-			val := strings.TrimSpace(parts[1])
-			if target != "" && val != "" {
-				channels[target] = val
-			}
+			log.Printf("[config] warning: failed to parse CROSSCAST_CHANNELS as JSON: %v", err)
 		}
 	}
 

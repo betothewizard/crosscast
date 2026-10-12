@@ -28,16 +28,3 @@ func TestConfig_Load_JSONChannels(t *testing.T) {
 		t.Errorf("alerts channel = %q, want 987654321098765432", cfg.Channels["alerts"])
 	}
 }
-
-func TestConfig_Load_CommaSeparatedFallback(t *testing.T) {
-	os.Setenv("CROSSCAST_CHANNELS", "jobs:111,alerts:222")
-	defer os.Unsetenv("CROSSCAST_CHANNELS")
-
-	cfg := config.Load()
-	if cfg.Channels["jobs"] != "111" {
-		t.Errorf("jobs channel = %q, want 111", cfg.Channels["jobs"])
-	}
-	if cfg.Channels["alerts"] != "222" {
-		t.Errorf("alerts channel = %q, want 222", cfg.Channels["alerts"])
-	}
-}
