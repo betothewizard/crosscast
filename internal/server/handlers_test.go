@@ -1,4 +1,4 @@
-package gateway_test
+package server_test
 
 import (
 	"bytes"
@@ -7,44 +7,19 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/betothewizard/crosscast/internal/bot"
+	"github.com/betothewizard/crosscast/internal/broadcast"
 	"github.com/betothewizard/crosscast/internal/config"
-	"github.com/betothewizard/crosscast/internal/gateway"
-	"github.com/betothewizard/crosscast/internal/router"
-	"github.com/betothewizard/crosscast/internal/telegram"
+	"github.com/betothewizard/crosscast/internal/platform/discord"
+	"github.com/betothewizard/crosscast/internal/platform/telegram"
+	"github.com/betothewizard/crosscast/internal/server"
 )
-
-func setupTestApp(apiKey string) (http.Handler, *bot.Bot) {
-	cfg := &config.Config{
-		Port:   6403,
-		APIKey: apiKey,
-		Channels: map[string]config.ChannelTarget{
-			"alerts": {
-				Discord:  "111111111111111111",
-				Telegram: "-1001111111111",
-			},
-			"announcements": {
-				Discord: "222222222222222222",
-			},
-		},
-	}
-
-	b := bot.New(cfg)
-	tg := telegram.New(cfg)
-	rtr := router.New(cfg)
-	srv := gateway.NewServer(cfg, b, tg, rtr)
-
-	_ = srv
-	return nil, b
-}
 
 func TestHealthEndpoint(t *testing.T) {
 	cfg := &config.Config{Port: 6403}
-	b := bot.New(cfg)
+	d := discord.New(cfg)
 	tg := telegram.New(cfg)
-	rtr := router.New(cfg)
-
-	srv := gateway.NewServer(cfg, b, tg, rtr)
+	bcast := broadcast.NewService(cfg, d, tg)
+	srv := server.New(cfg, bcast)
 	_ = srv
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -74,7 +49,7 @@ func TestHealthEndpoint(t *testing.T) {
 func TestAuthMiddleware(t *testing.T) {
 	apiKey := "secret-test-token"
 
-	handler := gateway.AuthMiddleware(apiKey, func(w http.ResponseWriter, r *http.Request) {
+	handler := server.AuthMiddleware(apiKey, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"success":true}`))
 	})

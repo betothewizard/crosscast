@@ -1,4 +1,4 @@
-package router
+package broadcast
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/betothewizard/crosscast/internal/config"
-	"github.com/bwmarrin/discordgo"
 )
 
 var (
@@ -30,18 +29,18 @@ type ResolvedTargets struct {
 	DefaultColor     int
 }
 
-// Router manages routing rules between logical target names and destination platform channels.
-type Router struct {
+// Resolver maps logical target aliases to platform-specific destinations.
+type Resolver struct {
 	cfg *config.Config
 }
 
-// New creates a new Router instance.
-func New(cfg *config.Config) *Router {
-	return &Router{cfg: cfg}
+// NewResolver creates a new target Resolver instance.
+func NewResolver(cfg *config.Config) *Resolver {
+	return &Resolver{cfg: cfg}
 }
 
-// Resolve maps a logical target and optional platform filter to resolved platform destinations.
-func (r *Router) Resolve(target string, platform string) (*ResolvedTargets, error) {
+// Resolve maps a logical target alias and optional platform filter to resolved platform destinations.
+func (r *Resolver) Resolve(target string, platform string) (*ResolvedTargets, error) {
 	t := strings.ToLower(strings.TrimSpace(target))
 	plat := strings.ToLower(strings.TrimSpace(platform))
 	if plat == "" {
@@ -95,11 +94,6 @@ func (r *Router) Resolve(target string, platform string) (*ResolvedTargets, erro
 	}
 
 	return nil, fmt.Errorf("target '%s' could not be resolved for platform '%s' (configure in CROSSCAST_CHANNELS)", target, plat)
-}
-
-// PrepareDiscordMessage validates and constructs the discordgo.MessageSend for a given payload.
-func (r *Router) PrepareDiscordMessage(payload *BroadcastPayload, defaultColor int) *discordgo.MessageSend {
-	return payload.ToDiscordMessage(defaultColor)
 }
 
 func pickDefaultColor(target string) int {

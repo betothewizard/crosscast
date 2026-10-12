@@ -1,4 +1,4 @@
-package gateway
+package server
 
 import (
 	"context"
@@ -7,36 +7,32 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/betothewizard/crosscast/internal/bot"
+	"github.com/betothewizard/crosscast/internal/broadcast"
 	"github.com/betothewizard/crosscast/internal/config"
-	"github.com/betothewizard/crosscast/internal/router"
-	"github.com/betothewizard/crosscast/internal/telegram"
 )
 
-// HTTPServer manages the inbound HTTP gateway.
+// HTTPServer manages the inbound HTTP server and routing.
 type HTTPServer struct {
 	httpServer *http.Server
 	port       int
 }
 
-// NewServer initializes a new HTTPServer with Discord and Telegram bot backends wired.
-func NewServer(cfg *config.Config, b *bot.Bot, tg *telegram.Bot, rtr *router.Router) *HTTPServer {
-	s := &Server{
-		bot:    b,
-		tgBot:  tg,
-		router: rtr,
-		apiKey: cfg.APIKey,
+// New initializes a new HTTPServer with routes and middlewares.
+func New(cfg *config.Config, bcast *broadcast.Service) *HTTPServer {
+	h := &Handler{
+		broadcast: bcast,
+		apiKey:    cfg.APIKey,
 	}
 
 	mux := http.NewServeMux()
 
 	// Endpoints
-	mux.HandleFunc("POST /broadcast", AuthMiddleware(s.apiKey, s.handleBroadcast))
-	mux.HandleFunc("POST /api/v1/broadcast", AuthMiddleware(s.apiKey, s.handleBroadcast))
-	mux.HandleFunc("GET /health", s.handleHealth)
-	mux.HandleFunc("GET /", s.handleRoot)
+	mux.HandleFunc("POST /broadcast", AuthMiddleware(h.apiKey, h.handleBroadcast))
+	mux.HandleFunc("POST /api/v1/broadcast", AuthMiddleware(h.apiKey, h.handleBroadcast))
+	mux.HandleFunc("GET /health", h.handleHealth)
+	mux.HandleFunc("GET /", h.handleRoot)
 
-	// Apply middlewares (Recovery -> Logging -> Router)
+	// Apply middlewares (Recovery -> Logging -> Mux)
 	handler := RecoveryMiddleware(LoggerMiddleware(mux))
 
 	httpSrv := &http.Server{
@@ -55,7 +51,7 @@ func NewServer(cfg *config.Config, b *bot.Bot, tg *telegram.Bot, rtr *router.Rou
 
 // Start listens and serves inbound HTTP requests.
 func (s *HTTPServer) Start() error {
-	log.Printf("[gateway] HTTP server listening on http://0.0.0.0:%d", s.port)
+	log.Printf("[server] HTTP server listening on http://0.0.0.0:%d", s.port)
 	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("http server failed: %w", err)
 	}
@@ -64,6 +60,6 @@ func (s *HTTPServer) Start() error {
 
 // Shutdown gracefully stops the HTTP server.
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	log.Printf("[gateway] stopping HTTP server...")
+	log.Printf("[server] stopping HTTP server...")
 	return s.httpServer.Shutdown(ctx)
 }

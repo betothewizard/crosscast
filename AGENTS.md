@@ -12,12 +12,12 @@
    - Routes payloads to configured target channels (e.g. `alerts`, `announcements`, `deployments`, or raw Discord channel snowflake IDs).
    - Generates beautifully formatted Discord Rich Embeds with smart color coding.
 
-2. **24/7 Persistent Discord Bot Daemon (`internal/bot`)**:
+2. **24/7 Persistent Discord Bot Daemon (`internal/platform/discord`)**:
    - Maintains continuous WebSocket presence with the Discord Gateway.
    - Registers and handles interactive Slash Commands (`/ping`, `/status`).
    - Sits in guild member lists with customized presence activities.
 
-3. **24/7 Telegram Bot Daemon (`internal/telegram`)**:
+3. **24/7 Telegram Bot Daemon (`internal/platform/telegram`)**:
    - Maintains update long-polling for commands (`/ping`, `/status`, `/start`).
    - Dispatches formatted HTML messages, link buttons, and photos to channels and groups.
 
@@ -31,25 +31,27 @@ crosscast/
 │   └── crosscast/
 │       └── main.go           ← Entrypoint, signal handler & lifecycle orchestrator
 ├── internal/
-│   ├── bot/                  ← Discordgo session, WebSocket connection & slash commands
-│   │   ├── bot.go
-│   │   └── handlers.go
-│   ├── telegram/             ← Telegram bot session, HTML formatter & command polling
-│   │   ├── bot.go
-│   │   ├── format.go
-│   │   └── format_test.go
+│   ├── platform/             ← Sibling platform drivers (Discord, Telegram, future extensions)
+│   │   ├── discord/          ← Discord bot session, WebSocket connection & slash commands
+│   │   │   ├── bot.go
+│   │   │   └── handlers.go
+│   │   └── telegram/         ← Telegram bot session & command polling
+│   │       └── bot.go
 │   ├── config/               ← Environment variable loader & strict JSON channels parser
 │   │   ├── config.go
 │   │   └── config_test.go
-│   ├── gateway/              ← HTTP REST API server (Go 1.22+ net/http)
-│   │   ├── handlers.go
-│   │   ├── handlers_test.go
-│   │   ├── middleware.go     ← Bearer auth, logging & panic recovery
-│   │   └── server.go
-│   └── router/               ← Multi-platform routing & message transformer
-│       ├── message.go
-│       ├── router.go
-│       └── router_test.go
+│   ├── broadcast/            ← Core domain: target resolution, formatting & broadcast orchestrator
+│   │   ├── format.go
+│   │   ├── format_test.go
+│   │   ├── payload.go
+│   │   ├── resolver.go
+│   │   ├── resolver_test.go
+│   │   └── service.go
+│   └── server/               ← HTTP REST API server & handlers (Go 1.22+ net/http)
+│       ├── handlers.go
+│       ├── handlers_test.go
+│       ├── middleware.go     ← Bearer auth, logging & panic recovery
+│       └── server.go
 ├── .env.example
 ├── Dockerfile
 ├── Makefile

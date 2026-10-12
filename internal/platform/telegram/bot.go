@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/betothewizard/crosscast/internal/config"
-	"github.com/betothewizard/crosscast/internal/router"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -78,8 +77,16 @@ func (b *Bot) IsReady() bool {
 	return b.ready && b.api != nil
 }
 
+// Message represents an outbound Telegram message payload.
+type Message struct {
+	Text       string
+	ImageURL   string
+	ButtonURL  string
+	ButtonText string
+}
+
 // SendMessage delivers a formatted message or card to a designated Telegram chat ID or channel username.
-func (b *Bot) SendMessage(target string, payload *router.BroadcastPayload) (*tgbotapi.Message, error) {
+func (b *Bot) SendMessage(target string, msg *Message) (*tgbotapi.Message, error) {
 	if !b.IsReady() {
 		return nil, fmt.Errorf("telegram bot is not configured or offline (check TELEGRAM_BOT_TOKEN)")
 	}
@@ -98,62 +105,57 @@ func (b *Bot) SendMessage(target string, payload *router.BroadcastPayload) (*tgb
 		chatID = id
 	}
 
-	text := FormatPayloadToHTML(payload)
-	if text == "" {
-		text = payload.Content
-	}
-	if text == "" {
-		return nil, fmt.Errorf("message content or embed body cannot be empty")
+	if msg == nil || (msg.Text == "" && msg.ImageURL == "") {
+		return nil, fmt.Errorf("message text or image cannot be empty")
 	}
 
 	// Prepare inline button if URL is provided
 	var keyboard *tgbotapi.InlineKeyboardMarkup
-	if payload.URL != "" {
-		btn := tgbotapi.NewInlineKeyboardButtonURL("View Details", payload.URL)
+	if msg.ButtonURL != "" {
+		btnLabel := msg.ButtonText
+		if btnLabel == "" {
+			btnLabel = "View Details"
+		}
+		btn := tgbotapi.NewInlineKeyboardButtonURL(btnLabel, msg.ButtonURL)
 		kb := tgbotapi.NewInlineKeyboardMarkup(tgbotapi.NewInlineKeyboardRow(btn))
 		keyboard = &kb
 	}
 
-	imageURL := payload.Image
-	if imageURL == "" {
-		imageURL = payload.Thumbnail
-	}
-
 	// Case 1: Send Photo with HTML Caption
-	if imageURL != "" {
+	if msg.ImageURL != "" {
 		var photo tgbotapi.PhotoConfig
 		if channelUsername != "" {
-			photo = tgbotapi.NewPhotoToChannel(channelUsername, tgbotapi.FileURL(imageURL))
+			photo = tgbotapi.NewPhotoToChannel(channelUsername, tgbotapi.FileURL(msg.ImageURL))
 		} else {
-			photo = tgbotapi.NewPhoto(chatID, tgbotapi.FileURL(imageURL))
+			photo = tgbotapi.NewPhoto(chatID, tgbotapi.FileURL(msg.ImageURL))
 		}
-		photo.Caption = text
+		photo.Caption = msg.Text
 		photo.ParseMode = tgbotapi.ModeHTML
 		if keyboard != nil {
 			photo.ReplyMarkup = *keyboard
 		}
 
-		msg, err := b.api.Send(photo)
+		sentMsg, err := b.api.Send(photo)
 		if err != nil {
 			return nil, fmt.Errorf("failed to send telegram photo: %w", err)
 		}
-		return &msg, nil
+		return &sentMsg, nil
 	}
 
 	// Case 2: Send Text Message
-	var msg tgbotapi.MessageConfig
+	var msgCfg tgbotapi.MessageConfig
 	if channelUsername != "" {
-		msg = tgbotapi.NewMessageToChannel(channelUsername, text)
+		msgCfg = tgbotapi.NewMessageToChannel(channelUsername, msg.Text)
 	} else {
-		msg = tgbotapi.NewMessage(chatID, text)
+		msgCfg = tgbotapi.NewMessage(chatID, msg.Text)
 	}
-	msg.ParseMode = tgbotapi.ModeHTML
-	msg.DisableWebPagePreview = false
+	msgCfg.ParseMode = tgbotapi.ModeHTML
+	msgCfg.DisableWebPagePreview = false
 	if keyboard != nil {
-		msg.ReplyMarkup = *keyboard
+		msgCfg.ReplyMarkup = *keyboard
 	}
 
-	sentMsg, err := b.api.Send(msg)
+	sentMsg, err := b.api.Send(msgCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send telegram message: %w", err)
 	}

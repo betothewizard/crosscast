@@ -8,11 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/betothewizard/crosscast/internal/bot"
+	"github.com/betothewizard/crosscast/internal/broadcast"
 	"github.com/betothewizard/crosscast/internal/config"
-	"github.com/betothewizard/crosscast/internal/gateway"
-	"github.com/betothewizard/crosscast/internal/router"
-	"github.com/betothewizard/crosscast/internal/telegram"
+	"github.com/betothewizard/crosscast/internal/platform/discord"
+	"github.com/betothewizard/crosscast/internal/platform/telegram"
+	"github.com/betothewizard/crosscast/internal/server"
 )
 
 const banner = `
@@ -32,11 +32,11 @@ func main() {
 	defer cancel()
 
 	// 1. Initialize Discord Bot Daemon
-	b := bot.New(cfg)
-	if err := b.Start(ctx); err != nil {
+	discordBot := discord.New(cfg)
+	if err := discordBot.Start(ctx); err != nil {
 		log.Printf("[discord] connection error: %v", err)
 	}
-	defer b.Close()
+	defer discordBot.Close()
 
 	// 2. Initialize Telegram Bot Daemon
 	tgBot := telegram.New(cfg)
@@ -45,16 +45,16 @@ func main() {
 	}
 	defer tgBot.Close()
 
-	// 3. Initialize Multi-Platform Routing Engine
-	rtr := router.New(cfg)
+	// 3. Initialize Multi-Platform Broadcasting Service
+	bcast := broadcast.NewService(cfg, discordBot, tgBot)
 
-	// 4. Initialize HTTP Gateway Server
-	srv := gateway.NewServer(cfg, b, tgBot, rtr)
+	// 4. Initialize HTTP Server
+	srv := server.New(cfg, bcast)
 
 	// Start HTTP server in a goroutine
 	go func() {
 		if err := srv.Start(); err != nil {
-			log.Fatalf("[gateway] fatal: %v", err)
+			log.Fatalf("[server] fatal: %v", err)
 		}
 	}()
 

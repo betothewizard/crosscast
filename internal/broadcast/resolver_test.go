@@ -1,13 +1,13 @@
-package router_test
+package broadcast_test
 
 import (
 	"testing"
 
+	"github.com/betothewizard/crosscast/internal/broadcast"
 	"github.com/betothewizard/crosscast/internal/config"
-	"github.com/betothewizard/crosscast/internal/router"
 )
 
-func TestRouter_Resolve_MultiPlatform(t *testing.T) {
+func TestResolver_Resolve_MultiPlatform(t *testing.T) {
 	cfg := &config.Config{
 		DefaultChannelID: "000000000000000000",
 		TelegramChatID:   "-1000000000000",
@@ -24,7 +24,7 @@ func TestRouter_Resolve_MultiPlatform(t *testing.T) {
 			},
 		},
 	}
-	r := router.New(cfg)
+	r := broadcast.NewResolver(cfg)
 
 	// Case 1: Both platforms for alerts
 	res, err := r.Resolve("alerts", "all")
