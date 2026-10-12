@@ -12,6 +12,7 @@ import (
 	"github.com/betothewizard/crosscast/internal/config"
 	"github.com/betothewizard/crosscast/internal/gateway"
 	"github.com/betothewizard/crosscast/internal/router"
+	"github.com/betothewizard/crosscast/internal/telegram"
 )
 
 const banner = `
@@ -33,15 +34,22 @@ func main() {
 	// 1. Initialize Discord Bot Daemon
 	b := bot.New(cfg)
 	if err := b.Start(ctx); err != nil {
-		log.Printf("[bot] connection error: %v", err)
+		log.Printf("[discord] connection error: %v", err)
 	}
 	defer b.Close()
 
-	// 2. Initialize Routing Engine
+	// 2. Initialize Telegram Bot Daemon
+	tgBot := telegram.New(cfg)
+	if err := tgBot.Start(ctx); err != nil {
+		log.Printf("[telegram] connection error: %v", err)
+	}
+	defer tgBot.Close()
+
+	// 3. Initialize Multi-Platform Routing Engine
 	rtr := router.New(cfg)
 
-	// 3. Initialize HTTP Gateway Server
-	srv := gateway.NewServer(cfg, b, rtr)
+	// 4. Initialize HTTP Gateway Server
+	srv := gateway.NewServer(cfg, b, tgBot, rtr)
 
 	// Start HTTP server in a goroutine
 	go func() {
@@ -50,7 +58,7 @@ func main() {
 		}
 	}()
 
-	// 4. Wait for termination signals (SIGINT, SIGTERM)
+	// 5. Wait for termination signals (SIGINT, SIGTERM)
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-sigChan

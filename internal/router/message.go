@@ -28,7 +28,8 @@ type FooterPayload struct {
 
 // BroadcastPayload represents an inbound broadcast request.
 type BroadcastPayload struct {
-	Target      string          `json:"target"`                // "jobs", "donations", "alerts", or direct channel ID
+	Platform    string          `json:"platform,omitempty"`    // "all" (default), "discord", or "telegram"
+	Target      string          `json:"target"`                // Target alias ("jobs", "alerts") or direct channel ID
 	Content     string          `json:"content,omitempty"`     // Raw content or mentions (e.g. "@everyone")
 	Title       string          `json:"title,omitempty"`       // Embed Title
 	Description string          `json:"description,omitempty"` // Embed Description (Markdown)

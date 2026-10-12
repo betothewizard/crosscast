@@ -84,6 +84,11 @@ func (b *Bot) SendMessage(channelID string, msg *discordgo.MessageSend) (*discor
 	return b.session.ChannelMessageSendComplex(channelID, msg)
 }
 
+// IsReady returns whether the Discord session is active and ready to send messages.
+func (b *Bot) IsReady() bool {
+	return b.session != nil
+}
+
 // GetStatus returns the operational status and telemetry of the bot.
 func (b *Bot) GetStatus() BotStatus {
 	var mem runtime.MemStats

@@ -11,24 +11,29 @@ import (
 	"github.com/betothewizard/crosscast/internal/config"
 	"github.com/betothewizard/crosscast/internal/gateway"
 	"github.com/betothewizard/crosscast/internal/router"
+	"github.com/betothewizard/crosscast/internal/telegram"
 )
 
 func setupTestApp(apiKey string) (http.Handler, *bot.Bot) {
 	cfg := &config.Config{
 		Port:   6403,
 		APIKey: apiKey,
-		Channels: map[string]string{
-			"alerts":        "111111111111111111",
-			"announcements": "222222222222222222",
+		Channels: map[string]config.ChannelTarget{
+			"alerts": {
+				Discord:  "111111111111111111",
+				Telegram: "-1001111111111",
+			},
+			"announcements": {
+				Discord: "222222222222222222",
+			},
 		},
 	}
 
 	b := bot.New(cfg)
+	tg := telegram.New(cfg)
 	rtr := router.New(cfg)
-	srv := gateway.NewServer(cfg, b, rtr)
+	srv := gateway.NewServer(cfg, b, tg, rtr)
 
-	// In NewServer, we can test the private or we can construct the mux/middleware
-	// Let's verify through httptest
 	_ = srv
 	return nil, b
 }
@@ -36,16 +41,15 @@ func setupTestApp(apiKey string) (http.Handler, *bot.Bot) {
 func TestHealthEndpoint(t *testing.T) {
 	cfg := &config.Config{Port: 6403}
 	b := bot.New(cfg)
+	tg := telegram.New(cfg)
 	rtr := router.New(cfg)
-	_ = rtr
 
-	srv := gateway.NewServer(cfg, b, rtr)
+	srv := gateway.NewServer(cfg, b, tg, rtr)
 	_ = srv
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	w := httptest.NewRecorder()
 
-	// Direct endpoint test via server mux
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

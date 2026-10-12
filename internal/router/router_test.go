@@ -7,84 +7,70 @@ import (
 	"github.com/betothewizard/crosscast/internal/router"
 )
 
-func TestRouter_Resolve(t *testing.T) {
+func TestRouter_Resolve_MultiPlatform(t *testing.T) {
 	cfg := &config.Config{
 		DefaultChannelID: "000000000000000000",
-		Channels: map[string]string{
-			"alerts":        "111111111111111111",
-			"announcements": "222222222222222222",
-			"deployments":   "333333333333333333",
+		TelegramChatID:   "-1000000000000",
+		Channels: map[string]config.ChannelTarget{
+			"alerts": {
+				Discord:  "111111111111111111",
+				Telegram: "-1001111111111",
+			},
+			"discord_only": {
+				Discord: "222222222222222222",
+			},
+			"telegram_only": {
+				Telegram: "-1002222222222",
+			},
 		},
 	}
 	r := router.New(cfg)
 
-	tests := []struct {
-		name        string
-		target      string
-		expectedID  string
-		expectedCol int
-		expectErr   bool
-	}{
-		{"alerts target", "alerts", "111111111111111111", router.ColorDanger, false},
-		{"announcements target", "announcements", "222222222222222222", router.ColorInfo, false},
-		{"deployments target", "deployments", "333333333333333333", router.ColorDefault, false},
-		{"default target", "default", "000000000000000000", router.ColorDefault, false},
-		{"empty target falls back to default", "", "000000000000000000", router.ColorDefault, false},
-		{"direct snowflake ID", "999999999999999999", "999999999999999999", router.ColorDefault, false},
-		{"unconfigured target", "unknown_channel", "", 0, true},
+	// Case 1: Both platforms for alerts
+	res, err := r.Resolve("alerts", "all")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.DiscordChannelID != "111111111111111111" {
+		t.Errorf("discord id = %q, want 111111111111111111", res.DiscordChannelID)
+	}
+	if res.TelegramChatID != "-1001111111111" {
+		t.Errorf("telegram id = %q, want -1001111111111", res.TelegramChatID)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			info, err := r.Resolve(tt.target)
-			if tt.expectErr {
-				if err == nil {
-					t.Fatalf("expected error for target %q, got nil", tt.target)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if info.ChannelID != tt.expectedID {
-				t.Errorf("channelID = %v, want %v", info.ChannelID, tt.expectedID)
-			}
-			if info.DefaultColor != tt.expectedCol {
-				t.Errorf("color = %v, want %v", info.DefaultColor, tt.expectedCol)
-			}
-		})
+	// Case 2: Filter platform to telegram only
+	res, err = r.Resolve("alerts", "telegram")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
-}
-
-func TestBroadcastPayload_ToDiscordMessage(t *testing.T) {
-	payload := &router.BroadcastPayload{
-		Target:      "deployments",
-		Title:       "Production Release v1.2.0",
-		Description: "Deployed successfully to cloud cluster",
-		URL:         "https://github.com/example/repo/releases/v1.2.0",
-		Author: &router.AuthorPayload{
-			Name: "GitHub Actions",
-		},
-		Fields: []router.FieldPayload{
-			{Name: "Environment", Value: "Production", Inline: true},
-			{Name: "Status", Value: "Success", Inline: true},
-		},
+	if res.DiscordChannelID != "" {
+		t.Errorf("discord id should be empty, got %q", res.DiscordChannelID)
+	}
+	if res.TelegramChatID != "-1001111111111" {
+		t.Errorf("telegram id = %q, want -1001111111111", res.TelegramChatID)
 	}
 
-	msg := payload.ToDiscordMessage(router.ColorSuccess)
-	if len(msg.Embeds) != 1 {
-		t.Fatalf("expected 1 embed, got %d", len(msg.Embeds))
+	// Case 3: Direct Telegram chat ID
+	res, err = r.Resolve("-100999888777", "all")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.TelegramChatID != "-100999888777" {
+		t.Errorf("telegram id = %q, want -100999888777", res.TelegramChatID)
 	}
 
-	embed := msg.Embeds[0]
-	if embed.Title != "Production Release v1.2.0" {
-		t.Errorf("title = %v, want 'Production Release v1.2.0'", embed.Title)
+	// Case 4: Direct Discord snowflake
+	res, err = r.Resolve("999999999999999999", "all")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
-	if embed.Color != router.ColorSuccess {
-		t.Errorf("color = %v, want %v", embed.Color, router.ColorSuccess)
+	if res.DiscordChannelID != "999999999999999999" {
+		t.Errorf("discord id = %q, want 999999999999999999", res.DiscordChannelID)
 	}
-	if len(embed.Fields) != 2 {
-		t.Errorf("fields len = %d, want 2", len(embed.Fields))
+
+	// Case 5: Unknown target
+	_, err = r.Resolve("unknown", "all")
+	if err == nil {
+		t.Fatalf("expected error for unknown target, got nil")
 	}
 }

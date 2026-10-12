@@ -10,6 +10,7 @@ import (
 	"github.com/betothewizard/crosscast/internal/bot"
 	"github.com/betothewizard/crosscast/internal/config"
 	"github.com/betothewizard/crosscast/internal/router"
+	"github.com/betothewizard/crosscast/internal/telegram"
 )
 
 // HTTPServer manages the inbound HTTP gateway.
@@ -18,10 +19,11 @@ type HTTPServer struct {
 	port       int
 }
 
-// NewServer initializes a new HTTPServer with all routes and middlewares wired.
-func NewServer(cfg *config.Config, b *bot.Bot, rtr *router.Router) *HTTPServer {
+// NewServer initializes a new HTTPServer with Discord and Telegram bot backends wired.
+func NewServer(cfg *config.Config, b *bot.Bot, tg *telegram.Bot, rtr *router.Router) *HTTPServer {
 	s := &Server{
 		bot:    b,
+		tgBot:  tg,
 		router: rtr,
 		apiKey: cfg.APIKey,
 	}

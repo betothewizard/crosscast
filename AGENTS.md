@@ -17,6 +17,10 @@
    - Registers and handles interactive Slash Commands (`/ping`, `/status`).
    - Sits in guild member lists with customized presence activities.
 
+3. **24/7 Telegram Bot Daemon (`internal/telegram`)**:
+   - Maintains update long-polling for commands (`/ping`, `/status`, `/start`).
+   - Dispatches formatted HTML messages, link buttons, and photos to channels and groups.
+
 ---
 
 ## 2. Architecture Map
@@ -30,15 +34,22 @@ crosscast/
 │   ├── bot/                  ← Discordgo session, WebSocket connection & slash commands
 │   │   ├── bot.go
 │   │   └── handlers.go
-│   ├── config/               ← Environment variable loader & defaults (.env support)
-│   │   └── config.go
+│   ├── telegram/             ← Telegram bot session, HTML formatter & command polling
+│   │   ├── bot.go
+│   │   ├── format.go
+│   │   └── format_test.go
+│   ├── config/               ← Environment variable loader & strict JSON channels parser
+│   │   ├── config.go
+│   │   └── config_test.go
 │   ├── gateway/              ← HTTP REST API server (Go 1.22+ net/http)
 │   │   ├── handlers.go
+│   │   ├── handlers_test.go
 │   │   ├── middleware.go     ← Bearer auth, logging & panic recovery
 │   │   └── server.go
-│   └── router/               ← Dynamic channel routing & Rich Embed transformer
+│   └── router/               ← Multi-platform routing & message transformer
 │       ├── message.go
-│       └── router.go
+│       ├── router.go
+│       └── router_test.go
 ├── .env.example
 ├── Dockerfile
 ├── Makefile
