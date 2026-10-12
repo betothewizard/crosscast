@@ -73,7 +73,7 @@ DISCORD_BOT_TOKEN=your_bot_token_here
 DISCORD_APP_ID=your_application_id_here
 
 # Channel Routing Map (Target Name -> Channel ID)
-CROSSCAST_CHANNELS=alerts:123456789012345678,announcements:123456789012345678,deployments:123456789012345678
+CROSSCAST_CHANNELS={"alerts":"123456789012345678","announcements":"123456789012345678","deployments":"123456789012345678"}
 ```
 
 ### 3. Run Locally

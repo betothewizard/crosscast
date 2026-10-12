@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"strconv"
@@ -49,16 +50,31 @@ func Load() *Config {
 	// Build target channels map
 	channels := make(map[string]string)
 
-	// 1. Parse comma-separated CROSSCAST_CHANNELS e.g. "alerts:123456,announcements:789012"
-	if rawChannels := os.Getenv("CROSSCAST_CHANNELS"); rawChannels != "" {
-		pairs := strings.Split(rawChannels, ",")
-		for _, pair := range pairs {
-			kv := strings.SplitN(strings.TrimSpace(pair), ":", 2)
-			if len(kv) == 2 {
-				k := strings.ToLower(strings.TrimSpace(kv[0]))
-				v := strings.TrimSpace(kv[1])
-				if k != "" && v != "" {
-					channels[k] = v
+	// 1. Parse CROSSCAST_CHANNELS (supports JSON object e.g. {"jobs":"123","alerts":"456"} or fallback "jobs:123,alerts:456")
+	if rawChannels := strings.TrimSpace(os.Getenv("CROSSCAST_CHANNELS")); rawChannels != "" {
+		if strings.HasPrefix(rawChannels, "{") {
+			var jsonMap map[string]string
+			if err := json.Unmarshal([]byte(rawChannels), &jsonMap); err == nil {
+				for k, v := range jsonMap {
+					kClean := strings.ToLower(strings.TrimSpace(k))
+					vClean := strings.TrimSpace(v)
+					if kClean != "" && vClean != "" {
+						channels[kClean] = vClean
+					}
+				}
+			} else {
+				log.Printf("[config] warning: failed to parse CROSSCAST_CHANNELS as JSON: %v", err)
+			}
+		} else {
+			pairs := strings.Split(rawChannels, ",")
+			for _, pair := range pairs {
+				kv := strings.SplitN(strings.TrimSpace(pair), ":", 2)
+				if len(kv) == 2 {
+					k := strings.ToLower(strings.TrimSpace(kv[0]))
+					v := strings.TrimSpace(kv[1])
+					if k != "" && v != "" {
+						channels[k] = v
+					}
 				}
 			}
 		}
