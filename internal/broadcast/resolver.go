@@ -10,7 +10,7 @@ import (
 
 var (
 	discordSnowflakeRegex = regexp.MustCompile(`^\d{17,20}$`)
-	telegramChatIDRegex   = regexp.MustCompile(`^(-\d{5,20}|@\w{3,32})$`)
+	telegramChatIDRegex   = regexp.MustCompile(`^(-?\d{5,16}|-\d{17,20}|@\w{3,32})$`)
 )
 
 // Standard color palette (Hex)
